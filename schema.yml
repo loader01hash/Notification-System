@@ -1,0 +1,2093 @@
+openapi: 3.0.3
+info:
+  title: Notification System API
+  version: v1
+  description: A scalable notification system with multiple channels
+paths:
+  /api/v1/auth/quick-check/:
+    get:
+      operationId: auth_quick_check_retrieve
+      description: Simple endpoint to check if token is valid
+      summary: Quick Token Check
+      tags:
+      - Authentication
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickCheck'
+          description: ''
+  /api/v1/auth/quick-token/:
+    post:
+      operationId: auth_quick_token_create
+      description: Simple endpoint to get token with username/password
+      summary: Quick Token Obtain
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+          description: ''
+  /api/v1/auth/register/:
+    post:
+      operationId: auth_register_create
+      description: Create a new user account and get authentication token
+      summary: Create User Account
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username
+                password:
+                  type: string
+                  description: Password
+                email:
+                  type: string
+                  description: Email address
+                  required: false
+                first_name:
+                  type: string
+                  description: First name
+                  required: false
+                last_name:
+                  type: string
+                  description: Last name
+                  required: false
+              required:
+              - username
+              - password
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Authentication token
+                  user_id:
+                    type: integer
+                    description: User ID
+                  customer_id:
+                    type: string
+                    description: Customer UUID
+                  username:
+                    type: string
+                    description: Username
+                  email:
+                    type: string
+                    description: Email address
+                  message:
+                    type: string
+                    description: Success message
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Validation error
+          description: ''
+  /api/v1/auth/token/:
+    post:
+      operationId: auth_token_create
+      description: Get an authentication token by providing valid credentials
+      summary: Obtain Authentication Token
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username
+                password:
+                  type: string
+                  description: Password
+              required:
+              - username
+              - password
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Authentication token
+                  user_id:
+                    type: integer
+                    description: User ID
+                  username:
+                    type: string
+                    description: Username
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid credentials
+          description: ''
+  /api/v1/auth/token/check/:
+    get:
+      operationId: auth_token_check_retrieve
+      description: Verify token validity and get user information
+      summary: Check Token Status
+      tags:
+      - Authentication
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+                    description: User ID
+                  username:
+                    type: string
+                    description: Username
+                  email:
+                    type: string
+                    description: Email
+                  is_active:
+                    type: boolean
+                    description: User is active
+                  token_valid:
+                    type: boolean
+                    description: Token is valid
+                  message:
+                    type: string
+                    description: Status message
+          description: ''
+  /api/v1/auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: Generate a new authentication token (invalidates the old one)
+      summary: Refresh Authentication Token
+      tags:
+      - Authentication
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: New authentication token
+                  message:
+                    type: string
+                    description: Success message
+          description: ''
+  /api/v1/auth/token/revoke/:
+    post:
+      operationId: auth_token_revoke_create
+      description: Delete the current authentication token (logout)
+      summary: Revoke Authentication Token
+      tags:
+      - Authentication
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+          description: ''
+  /api/v1/customers/{id}/update/:
+    put:
+      operationId: customers_update_update
+      description: Update customer information. Users can update their own data.
+      summary: Update Customer Details
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Customer name
+                email:
+                  type: string
+                  description: Email address
+                phone:
+                  type: string
+                  description: Phone number
+                telegram_chat_id:
+                  type: string
+                  description: Telegram chat ID
+                address:
+                  type: string
+                  description: Address
+                city:
+                  type: string
+                  description: City
+                country:
+                  type: string
+                  description: Country
+                postal_code:
+                  type: string
+                  description: Postal code
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Validation error
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Permission denied
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Customer not found
+          description: ''
+  /api/v1/customers/admin/{id}/:
+    get:
+      operationId: customers_admin_retrieve
+      description: Get detailed information about a specific customer. Only admin
+        users can access this endpoint.
+      summary: Get Customer Details (Admin Only)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Customers - Admin
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Admin access required
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Customer not found
+          description: ''
+  /api/v1/customers/admin/{id}/delete/:
+    delete:
+      operationId: customers_admin_delete_destroy
+      description: Delete customer and associated user account. Only admin users can
+        perform this action.
+      summary: Delete Customer (Admin Only)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Customers - Admin
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          content:
+            application/json:
+              schema:
+                description: Customer deleted successfully
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Admin access required
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Customer not found
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                description: Deletion failed
+          description: ''
+  /api/v1/customers/admin/list/:
+    get:
+      operationId: customers_admin_list_list
+      description: Get a list of all customers. Only admin users can access this endpoint.
+      summary: List All Customers (Admin Only)
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Customers - Admin
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCustomerList'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Admin access required
+          description: ''
+  /api/v1/customers/me/:
+    get:
+      operationId: customers_me_retrieve
+      description: Get customer data for the currently authenticated user.
+      summary: Get My Customer Data
+      tags:
+      - Customers
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Customer data not found for this user
+          description: ''
+  /api/v1/health/:
+    get:
+      operationId: health_retrieve
+      description: Health check endpoint for load balancer monitoring
+      tags:
+      - health
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+          description: ''
+  /api/v1/metrics/:
+    get:
+      operationId: metrics_retrieve
+      description: System and application metrics for monitoring
+      tags:
+      - metrics
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metrics'
+          description: ''
+  /api/v1/notifications/admin/{id}/retry/:
+    post:
+      operationId: notifications_admin_retry_create
+      description: Retry a failed notification.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/admin/{id}/:
+    get:
+      operationId: notifications_admin_retrieve
+      description: API view to get notification details.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/v1/notifications/admin/analytics/:
+    get:
+      operationId: notifications_admin_analytics_retrieve
+      description: Get notification analytics
+      parameters:
+      - in: query
+        name: days
+        schema:
+          type: integer
+        description: Number of days for analytics
+      tags:
+      - notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/admin/list/:
+    get:
+      operationId: notifications_admin_list_list
+      description: API view to list notifications.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/v1/notifications/admin/send/:
+    post:
+      operationId: notifications_admin_send_create
+      description: Send a single notification
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/v1/notifications/admin/send-bulk/:
+    post:
+      operationId: notifications_admin_send_bulk_create
+      description: Send bulk notifications
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendBulkNotificationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SendBulkNotificationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendBulkNotificationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/v1/notifications/admin/status/{id}/:
+    get:
+      operationId: notifications_admin_status_retrieve
+      description: Get notification status
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/v1/notifications/admin/templates/:
+    get:
+      operationId: notifications_admin_templates_list
+      description: API view to list and create notification templates.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationTemplateList'
+          description: ''
+    post:
+      operationId: notifications_admin_templates_create
+      description: API view to list and create notification templates.
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationTemplateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NotificationTemplateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NotificationTemplateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationTemplate'
+          description: ''
+  /api/v1/notifications/admin/templates/{id}/:
+    get:
+      operationId: notifications_admin_templates_retrieve
+      description: API view for notification template details.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationTemplate'
+          description: ''
+    put:
+      operationId: notifications_admin_templates_update
+      description: API view for notification template details.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationTemplateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NotificationTemplateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NotificationTemplateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationTemplate'
+          description: ''
+    patch:
+      operationId: notifications_admin_templates_partial_update
+      description: API view for notification template details.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationTemplateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationTemplateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationTemplateRequest'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationTemplate'
+          description: ''
+    delete:
+      operationId: notifications_admin_templates_destroy
+      description: API view for notification template details.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/notifications/my/:
+    get:
+      operationId: notifications_my_retrieve
+      description: Get notification history for the currently authenticated user.
+      summary: Get My Notifications
+      tags:
+      - User Notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_id:
+                    type: string
+                    description: Customer UUID
+                  customer_name:
+                    type: string
+                    description: Customer name
+                  notifications:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                        title:
+                          type: string
+                        message:
+                          type: string
+                        status:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                  total_count:
+                    type: integer
+                  unread_count:
+                    type: integer
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Customer data not found
+          description: ''
+  /api/v1/notifications/preferences/:
+    get:
+      operationId: notifications_preferences_retrieve
+      description: Get notification preferences for the currently authenticated user
+        along with their customer data.
+      summary: Get My Notification Preferences
+      tags:
+      - User Notifications
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_data:
+                    type: object
+                    description: Customer information
+                  preferences:
+                    type: object
+                    properties:
+                      email_enabled:
+                        type: boolean
+                      telegram_enabled:
+                        type: boolean
+                      order_updates:
+                        type: boolean
+                      promotional:
+                        type: boolean
+                      security_alerts:
+                        type: boolean
+                      timezone:
+                        type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Customer data not found
+          description: ''
+    put:
+      operationId: notifications_preferences_update
+      description: Update notification preferences for the currently authenticated
+        user.
+      summary: Update My Notification Preferences
+      tags:
+      - User Notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_enabled:
+                  type: boolean
+                  description: Enable email notifications
+                telegram_enabled:
+                  type: boolean
+                  description: Enable Telegram notifications
+                order_updates:
+                  type: boolean
+                  description: Receive order updates
+                promotional:
+                  type: boolean
+                  description: Receive promotional messages
+                security_alerts:
+                  type: boolean
+                  description: Receive security alerts
+                timezone:
+                  type: string
+                  description: User timezone
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_data:
+                    type: object
+                    description: Customer information
+                  preferences:
+                    type: object
+                    properties:
+                      email_enabled:
+                        type: boolean
+                      telegram_enabled:
+                        type: boolean
+                      order_updates:
+                        type: boolean
+                      promotional:
+                        type: boolean
+                      security_alerts:
+                        type: boolean
+                      timezone:
+                        type: string
+                  message:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Customer data not found
+          description: ''
+  /api/v1/orders/:
+    get:
+      operationId: orders_list
+      description: API view to list and create orders.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - orders
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderList'
+          description: ''
+    post:
+      operationId: orders_create
+      description: API view to list and create orders.
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/v1/orders/{id}/:
+    get:
+      operationId: orders_retrieve
+      description: API view for order details.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - orders
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    put:
+      operationId: orders_update
+      description: API view for order details.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    patch:
+      operationId: orders_partial_update
+      description: API view for order details.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    delete:
+      operationId: orders_destroy
+      description: API view for order details.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - orders
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/orders/{id}/items/:
+    get:
+      operationId: orders_items_list
+      description: API view to list order items.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - orders
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderItemList'
+          description: ''
+  /api/v1/orders/{id}/status/:
+    put:
+      operationId: orders_status_update
+      description: Update order status
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderStatusUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderStatusUpdateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  order_id:
+                    type: string
+                  old_status:
+                    type: string
+                  new_status:
+                    type: string
+          description: ''
+  /api/v1/system-status/:
+    get:
+      operationId: system_status_retrieve
+      description: Detailed system status including services and configuration
+      tags:
+      - system-status
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+          description: ''
+components:
+  schemas:
+    ApplicationMetrics:
+      type: object
+      description: Serializer for application metrics.
+      properties:
+        cache:
+          $ref: '#/components/schemas/CacheStats'
+        database_connections:
+          $ref: '#/components/schemas/DatabaseMetrics'
+        error:
+          type: string
+      required:
+      - cache
+      - database_connections
+    CacheStats:
+      type: object
+      description: Serializer for cache statistics.
+      properties:
+        connected_clients:
+          type: integer
+        used_memory:
+          type: integer
+        hits:
+          type: integer
+        misses:
+          type: integer
+        error:
+          type: string
+    ChannelEnum:
+      enum:
+      - telegram
+      - email
+      type: string
+      description: |-
+        * `telegram` - Telegram
+        * `email` - Email
+    ConfigurationStatus:
+      type: object
+      description: Serializer for configuration status.
+      properties:
+        debug_mode:
+          type: boolean
+        cache_configured:
+          type: boolean
+        celery_configured:
+          type: boolean
+        logging_configured:
+          type: boolean
+      required:
+      - cache_configured
+      - celery_configured
+      - debug_mode
+      - logging_configured
+    Customer:
+      type: object
+      description: Serializer for Customer model.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          maxLength: 20
+        telegram_chat_id:
+          type: string
+          maxLength: 50
+        address:
+          type: string
+        city:
+          type: string
+          maxLength: 50
+        country:
+          type: string
+          maxLength: 50
+        postal_code:
+          type: string
+          maxLength: 20
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - email
+      - id
+      - name
+      - updated_at
+    DatabaseMetrics:
+      type: object
+      description: Serializer for database metrics.
+      properties:
+        active_connections:
+          type: string
+      required:
+      - active_connections
+    ExternalServices:
+      type: object
+      description: Serializer for external services status.
+      properties:
+        telegram_api:
+          type: string
+        email_service:
+          type: string
+      required:
+      - email_service
+      - telegram_api
+    HealthCheck:
+      type: object
+      description: Serializer for health check response.
+      properties:
+        status:
+          type: string
+        timestamp:
+          type: number
+          format: double
+        checks:
+          type: object
+          additionalProperties: {}
+      required:
+      - checks
+      - status
+      - timestamp
+    Metrics:
+      type: object
+      description: Serializer for metrics response.
+      properties:
+        timestamp:
+          type: number
+          format: double
+        system:
+          $ref: '#/components/schemas/SystemMetrics'
+        application:
+          $ref: '#/components/schemas/ApplicationMetrics'
+      required:
+      - application
+      - system
+      - timestamp
+    Notification:
+      type: object
+      description: Serializer for notifications.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        template_name:
+          type: string
+          readOnly: true
+        channel:
+          type: string
+          readOnly: true
+        recipient:
+          type: string
+          maxLength: 255
+        subject:
+          type: string
+          maxLength: 200
+        message:
+          type: string
+        status:
+          $ref: '#/components/schemas/NotificationStatusEnum'
+        priority:
+          $ref: '#/components/schemas/NotificationPriorityEnum'
+        retry_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        max_retries:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        error_message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        scheduled_at:
+          type: string
+          format: date-time
+        sent_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        customer_name:
+          type: string
+          readOnly: true
+        order_number:
+          type: string
+          readOnly: true
+      required:
+      - channel
+      - created_at
+      - customer_name
+      - delivered_at
+      - id
+      - message
+      - order_number
+      - recipient
+      - sent_at
+      - template_name
+      - updated_at
+    NotificationChannels:
+      type: object
+      description: Serializer for notification channels status.
+      properties:
+        telegram:
+          type: string
+        email:
+          type: string
+      required:
+      - email
+      - telegram
+    NotificationPriorityEnum:
+      enum:
+      - low
+      - normal
+      - high
+      - urgent
+      type: string
+      description: |-
+        * `low` - Low
+        * `normal` - Normal
+        * `high` - High
+        * `urgent` - Urgent
+    NotificationStatusEnum:
+      enum:
+      - pending
+      - queued
+      - sent
+      - delivered
+      - failed
+      - retrying
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `queued` - Queued
+        * `sent` - Sent
+        * `delivered` - Delivered
+        * `failed` - Failed
+        * `retrying` - Retrying
+    NotificationTemplate:
+      type: object
+      description: Serializer for notification templates.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        channel:
+          $ref: '#/components/schemas/ChannelEnum'
+        subject_template:
+          type: string
+          maxLength: 200
+        body_template:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - body_template
+      - channel
+      - created_at
+      - id
+      - name
+    NotificationTemplateRequest:
+      type: object
+      description: Serializer for notification templates.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        channel:
+          $ref: '#/components/schemas/ChannelEnum'
+        subject_template:
+          type: string
+          maxLength: 200
+        body_template:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+      required:
+      - body_template
+      - channel
+      - name
+    Order:
+      type: object
+      description: Serializer for Order model.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        order_number:
+          type: string
+          maxLength: 50
+        customer:
+          type: string
+          format: uuid
+        customer_name:
+          type: string
+          readOnly: true
+        customer_email:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/Status1f1Enum'
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        currency:
+          type: string
+          maxLength: 3
+        shipping_address:
+          type: string
+        shipping_method:
+          type: string
+          maxLength: 50
+        tracking_number:
+          type: string
+          maxLength: 100
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        confirmed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        shipped_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          readOnly: true
+      required:
+      - confirmed_at
+      - created_at
+      - customer
+      - customer_email
+      - customer_name
+      - delivered_at
+      - id
+      - items
+      - order_number
+      - shipped_at
+      - shipping_address
+      - total_amount
+      - updated_at
+    OrderItem:
+      type: object
+      description: Serializer for OrderItem model.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        product_name:
+          type: string
+          maxLength: 200
+        product_sku:
+          type: string
+          maxLength: 100
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        product_details: {}
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - product_name
+      - total_price
+      - unit_price
+    OrderItemRequest:
+      type: object
+      description: Serializer for OrderItem model.
+      properties:
+        product_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        product_sku:
+          type: string
+          maxLength: 100
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        product_details: {}
+      required:
+      - product_name
+      - unit_price
+    OrderRequest:
+      type: object
+      description: Serializer for Order model.
+      properties:
+        order_number:
+          type: string
+          minLength: 1
+          maxLength: 50
+        customer:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/Status1f1Enum'
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 3
+        shipping_address:
+          type: string
+          minLength: 1
+        shipping_method:
+          type: string
+          maxLength: 50
+        tracking_number:
+          type: string
+          maxLength: 100
+        notes:
+          type: string
+      required:
+      - customer
+      - order_number
+      - shipping_address
+      - total_amount
+    OrderStatusUpdateRequest:
+      type: object
+      description: Serializer for order status updates.
+      properties:
+        status:
+          $ref: '#/components/schemas/Status1f1Enum'
+      required:
+      - status
+    PaginatedCustomerList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+    PaginatedNotificationList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedNotificationTemplateList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationTemplate'
+    PaginatedOrderItemList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+    PaginatedOrderList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+    PatchedNotificationTemplateRequest:
+      type: object
+      description: Serializer for notification templates.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        channel:
+          $ref: '#/components/schemas/ChannelEnum'
+        subject_template:
+          type: string
+          maxLength: 200
+        body_template:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+    PatchedOrderRequest:
+      type: object
+      description: Serializer for Order model.
+      properties:
+        order_number:
+          type: string
+          minLength: 1
+          maxLength: 50
+        customer:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/Status1f1Enum'
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 3
+        shipping_address:
+          type: string
+          minLength: 1
+        shipping_method:
+          type: string
+          maxLength: 50
+        tracking_number:
+          type: string
+          maxLength: 100
+        notes:
+          type: string
+    Priority654Enum:
+      enum:
+      - low
+      - normal
+      - high
+      - urgent
+      type: string
+      description: |-
+        * `low` - low
+        * `normal` - normal
+        * `high` - high
+        * `urgent` - urgent
+    QuickCheck:
+      type: object
+      description: Serializer for quick check response.
+      properties:
+        valid:
+          type: boolean
+          description: Token is valid
+        user:
+          type: string
+          description: Username
+        user_id:
+          type: integer
+          description: User ID
+      required:
+      - user
+      - user_id
+      - valid
+    SendBulkNotificationRequest:
+      type: object
+      description: Serializer for sending bulk notifications.
+      properties:
+        template_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        recipients:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          maxItems: 100
+          minItems: 1
+        context: {}
+        priority:
+          allOf:
+          - $ref: '#/components/schemas/Priority654Enum'
+          default: normal
+      required:
+      - recipients
+      - template_name
+    SendNotificationRequest:
+      type: object
+      description: Serializer for sending notifications.
+      properties:
+        template_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        recipient:
+          type: string
+          minLength: 1
+          maxLength: 255
+        context: {}
+        priority:
+          allOf:
+          - $ref: '#/components/schemas/Priority654Enum'
+          default: normal
+        scheduled_at:
+          type: string
+          format: date-time
+        customer_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+      required:
+      - recipient
+      - template_name
+    ServicesStatus:
+      type: object
+      description: Serializer for services status.
+      properties:
+        notification_channels:
+          $ref: '#/components/schemas/NotificationChannels'
+        external:
+          $ref: '#/components/schemas/ExternalServices'
+      required:
+      - external
+      - notification_channels
+    Status1f1Enum:
+      enum:
+      - pending
+      - confirmed
+      - processing
+      - shipped
+      - delivered
+      - cancelled
+      - refunded
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `confirmed` - Confirmed
+        * `processing` - Processing
+        * `shipped` - Shipped
+        * `delivered` - Delivered
+        * `cancelled` - Cancelled
+        * `refunded` - Refunded
+    SystemMetrics:
+      type: object
+      description: Serializer for system metrics.
+      properties:
+        cpu_percent:
+          type: number
+          format: double
+          nullable: true
+        memory_percent:
+          type: number
+          format: double
+          nullable: true
+        disk_percent:
+          type: number
+          format: double
+          nullable: true
+        load_average:
+          type: number
+          format: double
+          nullable: true
+        error:
+          type: string
+    SystemStatus:
+      type: object
+      description: Serializer for system status response.
+      properties:
+        timestamp:
+          type: number
+          format: double
+        version:
+          type: string
+        environment:
+          type: string
+        services:
+          $ref: '#/components/schemas/ServicesStatus'
+        configuration:
+          $ref: '#/components/schemas/ConfigurationStatus'
+      required:
+      - configuration
+      - environment
+      - services
+      - timestamp
+      - version
+    TokenObtainRequest:
+      type: object
+      description: Serializer for token obtain endpoint.
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Username
+          maxLength: 150
+        password:
+          type: string
+          minLength: 1
+          description: Password
+          maxLength: 128
+      required:
+      - password
+      - username
+    TokenResponse:
+      type: object
+      description: Serializer for token response.
+      properties:
+        token:
+          type: string
+          description: Authentication token
+        user_id:
+          type: integer
+          description: User ID
+        username:
+          type: string
+          description: Username
+        message:
+          type: string
+          description: Success message
+      required:
+      - message
+      - token
+      - user_id
+      - username
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"
