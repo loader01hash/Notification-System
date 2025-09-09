@@ -2,27 +2,29 @@
 Notification URLs configuration.
 """
 from django.urls import path
-from . import views
+from .admin_views import (
+    NotificationAdminSendView, NotificationAdminBulkSendView, NotificationAdminListView,
+    NotificationAdminDetailView, NotificationAdminStatsView, NotificationAdminTemplateListView
+)
+from .user_views import (
+    NotificationUserListView, NotificationUserPreferencesView
+)
 
 app_name = 'notifications'
 
 urlpatterns = [
-    # User notification endpoints
-    path('my/', views.MyNotificationsView.as_view(), name='my-notifications'),
-    path('preferences/', views.MyNotificationPreferencesView.as_view(), name='my-preferences'),
+    # ===============================
+    # USER NOTIFICATION ENDPOINTS
+    # ===============================
+    path('my/', NotificationUserListView.as_view(), name='my-notifications'),
+    path('preferences/', NotificationUserPreferencesView.as_view(), name='my-preferences'),
     
-    # Admin notification management
-    path('admin/send/', views.SendNotificationView.as_view(), name='send-notification'),
-    path('admin/send-bulk/', views.SendBulkNotificationView.as_view(), name='send-bulk-notification'),
-    path('admin/list/', views.NotificationListView.as_view(), name='notification-list'),
-    path('admin/<uuid:pk>/', views.NotificationDetailView.as_view(), name='notification-detail'),
-    path('admin/status/<uuid:id>/', views.NotificationStatusView.as_view(), name='notification-status'),
-    path('admin/<uuid:id>/retry/', views.retry_notification, name='retry-notification'),
-    
-    # Analytics
-    path('admin/analytics/', views.NotificationAnalyticsView.as_view(), name='notification-analytics'),
-    
-    # Templates
-    path('admin/templates/', views.NotificationTemplateListView.as_view(), name='template-list'),
-    path('admin/templates/<uuid:pk>/', views.NotificationTemplateDetailView.as_view(), name='template-detail'),
+    # ===============================
+    # ADMIN NOTIFICATION ENDPOINTS
+    # ===============================
+    path('admin/send/', NotificationAdminSendView.as_view(), name='admin-send-notification'),
+    path('admin/send-bulk/', NotificationAdminBulkSendView.as_view(), name='admin-send-bulk-notification'),
+    path('admin/list/', NotificationAdminListView.as_view(), name='admin-notification-list'),
+    path('admin/templates/', NotificationAdminTemplateListView.as_view(), name='admin-template-list'),
+    path('admin/statistics/', NotificationAdminStatsView.as_view(), name='admin-notification-stats'),
 ]

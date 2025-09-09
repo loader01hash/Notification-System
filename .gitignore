@@ -156,3 +156,20 @@ Thumbs.db
 
 # Redis dump file
 dump.rdb
+
+# Temporary test files (keep repo clean)
+test_*.py
+check_*.py
+debug_*.py
+demo_*.py
+temp_*.py
+fix_*.py
+test_*.bat
+*_temp.py
+*_debug.py
+*_test.py
+
+# Generated sample data
+sample_*.py
+setup_demo_*.py
+create_sample_*.py

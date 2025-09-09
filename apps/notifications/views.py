@@ -285,22 +285,39 @@ class MyNotificationsView(APIView):
         try:
             customer = Customer.objects.get(email=request.user.email)
             
-            # For now, return mock data since notification system is not fully implemented
+            # Get actual notifications for the customer
+            limit = int(request.query_params.get('limit', 10))
+            notifications = Notification.objects.filter(
+                customer=customer
+            ).select_related('template', 'order').order_by('-created_at')[:limit]
+            
+            notification_list = []
+            unread_count = 0
+            
+            for notification in notifications:
+                # For demo purposes, assume notifications are "unread" if status is not "delivered"
+                if notification.status not in ['delivered', 'sent']:
+                    unread_count += 1
+                    
+                notification_list.append({
+                    'id': str(notification.id),
+                    'type': notification.template.name.lower().replace(' ', '_'),
+                    'title': notification.subject or notification.template.name,
+                    'message': notification.message[:200] + ('...' if len(notification.message) > 200 else ''),
+                    'status': notification.status,
+                    'priority': notification.priority,
+                    'channel': notification.template.channel,
+                    'created_at': notification.created_at.isoformat(),
+                    'sent_at': notification.sent_at.isoformat() if notification.sent_at else None,
+                    'order_number': notification.order.order_number if notification.order else None
+                })
+            
             return Response({
                 'customer_id': str(customer.id),
                 'customer_name': customer.name,
-                'notifications': [
-                    {
-                        'id': 'notif_001',
-                        'type': 'order_update',
-                        'title': 'Welcome!',
-                        'message': 'Welcome to our notification system!',
-                        'status': 'sent',
-                        'created_at': '2025-09-08T10:00:00Z'
-                    }
-                ],
-                'total_count': 1,
-                'unread_count': 0
+                'notifications': notification_list,
+                'total_count': len(notification_list),
+                'unread_count': unread_count
             })
             
         except Customer.DoesNotExist:

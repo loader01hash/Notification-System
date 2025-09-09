@@ -26,7 +26,7 @@ class Order(models.Model):
     # Order details
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=3, default='USD')
+    currency = models.CharField(max_length=3, default='INR')
     
     # Shipping information
     shipping_address = models.TextField()

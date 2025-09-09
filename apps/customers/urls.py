@@ -1,36 +1,40 @@
 """
-Customer URLs configuration.
+Customer URLs configuration - Separated User and Admin sections.
 """
 from django.urls import path
 from .views import (
-    CustomerListCreateView,
-    CustomerDetailView as CustomerAPIDetailView,
-    CustomerPreferencesView,
-    CustomerNotificationHistoryView
+    CustomerMyProfileView,
+    CustomerNotificationHistoryView as UserNotificationHistoryView
 )
 from .admin_views import (
-    CustomerListView,
-    CustomerDetailView,
-    CustomerUpdateView,
-    CustomerDeleteView,
-    MyCustomerDataView
+    CustomerAdminListView,
+    CustomerAdminCreateView,
+    CustomerAdminDetailView,
+    CustomerAdminUpdateView,
+    CustomerAdminDeleteView,
+    CustomerAdminNotificationHistoryView
 )
 
 app_name = 'customers'
 
 urlpatterns = [
-    # API endpoints
-    path('', CustomerListCreateView.as_view(), name='customer-list'),
-    path('<uuid:pk>/', CustomerAPIDetailView.as_view(), name='customer-detail'),
-    path('<uuid:pk>/preferences/', CustomerPreferencesView.as_view(), name='customer-preferences'),
-    path('<uuid:pk>/notifications/', CustomerNotificationHistoryView.as_view(), name='customer-notifications'),
+    # =====================================
+    # CUSTOMER - USER SECTION
+    # =====================================
     
-    # Admin-only endpoints
-    path('admin/list/', CustomerListView.as_view(), name='admin-customer-list'),
-    path('admin/<uuid:pk>/', CustomerDetailView.as_view(), name='admin-customer-detail'),
-    path('admin/<uuid:pk>/delete/', CustomerDeleteView.as_view(), name='admin-customer-delete'),
+    # User's own profile management
+    path('me/', CustomerMyProfileView.as_view(), name='customer-my-profile'),
+    path('my-notifications/', UserNotificationHistoryView.as_view(), name='customer-my-notifications'),
     
-    # User endpoints
-    path('me/', MyCustomerDataView.as_view(), name='my-customer-data'),
-    path('<uuid:pk>/update/', CustomerUpdateView.as_view(), name='customer-update'),
+    # =====================================
+    # CUSTOMER - ADMIN SECTION  
+    # =====================================
+    
+    # Admin customer management
+    path('admin/list/', CustomerAdminListView.as_view(), name='admin-customer-list'),
+    path('admin/create/', CustomerAdminCreateView.as_view(), name='admin-customer-create'),
+    path('admin/<str:email>/', CustomerAdminDetailView.as_view(), name='admin-customer-detail'),
+    path('admin/<str:email>/update/', CustomerAdminUpdateView.as_view(), name='admin-customer-update'),
+    path('admin/<str:email>/delete/', CustomerAdminDeleteView.as_view(), name='admin-customer-delete'),
+    path('admin/<str:email>/notifications/', CustomerAdminNotificationHistoryView.as_view(), name='admin-customer-notifications'),
 ]
